@@ -1,0 +1,135 @@
+---
+- name: Setup webservers
+  hosts: webservers
+  become: true
+  tasks:
+
+  - name: Install docker.io
+    apt:
+      update_cache: yes
+      name: docker.io
+      state: present
+
+  - name: Install pip3
+    apt:
+      name: python3-pip
+      state: present
+
+  - name: Install docker pip
+    pip:
+      name: docker
+      state: present
+
+  - name: Download and launch dvwa container
+    docker_container:
+      name: dvwa
+      image: cyberxsecurity/dvwa
+      state: started
+      restart_policy: always
+      published_ports: 80:80
+
+  - name: Enable docker service
+    systemd:
+      name: docker
+      enabled: yes
+
+- name: Install ELK
+  hosts: elk
+  become: true
+  tasks:
+
+  - ansible.posix.sysctl:
+      name: vm.max_map_count
+      value: '262144'
+      sysctl_file: /etc/sysctl.conf
+
+  - name: Install docker.io
+    apt:
+      update_cache: yes
+      name: docker.io
+      state: present
+
+  - name: Install pip3
+    apt:
+      name: python3-pip
+      state: present
+
+  - name: Install docker pip
+    pip:
+      name: docker
+      state: present
+
+  - name: Download and launch ELK container
+    docker_container:
+      name: ELK
+      image: sebp/elk:761
+      state: started
+      restart_policy: always
+      published_ports:
+        - "5601:5601"
+        - "9200:9200"
+        - "5044:5044"
+
+  - name: Enable docker service
+    systemd:
+      name: docker
+      enabled: yes
+
+- name: install and launch filebeat
+  hosts: webservers
+  become: yes
+  tasks:
+  - name: download filebeat deb
+    command: curl -L -O curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.1-amd64.deb
+
+  - name: install filebeat deb
+    command: dpkg -i filebeat-7.6.1-amd64.deb
+
+  - name: drop in filebeat.yml
+    copy:
+      src: /etc/ansible/filebeat-config.yml
+      dest: /etc/filebeat/filebeat.yml
+
+  - name: enable and configure system module
+    command: filebeat modules enable system
+
+  - name: setup filebeat
+    command: filebeat setup
+
+  - name: start filebeat service
+    command: service filebeat start
+
+  - name: make sure filebeat is running
+    ansible.builtin.systemd:
+      state: started
+      name: filebeat
+
+- name: Install metric beat
+  hosts: webservers
+  become: true
+  tasks:
+
+  - name: Download metricbeat
+    command: curl -L -O https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-7.6.1-amd64.deb
+
+  - name: install metricbeat
+    command: dpkg -i metricbeat-7.6.1-amd64.deb
+
+  - name: drop in metricbeat config
+    copy:
+      src: /etc/ansible/metricbeat-config.yml
+      dest: /etc/metricbeat/metricbeat.yml
+
+  - name: enable and configure docker module for metric beat
+    command: metricbeat modules enable docker
+
+  - name: setup metric beat
+    command: metricbeat setup -e
+
+  - name: start metric beat
+    command: service metricbeat start
+
+  - name: enable service metricbeat on boot
+    systemd:
+      name: metricbeat
+      enabled: yes
