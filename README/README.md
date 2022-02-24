@@ -24,7 +24,7 @@ Load balancing ensures that the application will be highly available, in additio
 Integrating an ELK server allows users to easily monitor the vulnerable VMs for changes to the servers being monitored and system status.
 
 The configuration details of each machine may be found below.
-_Note: Use the [Markdown Table Generator](http://www.tablesgenerator.com/markdown_tables) to add/remove values from the table_.
+
 
 |         Name         |        Function       |  Public IPv4  | Private IPv4 | Operating System |
 |:--------------------:|:---------------------:|:-------------:|:------------:|:----------------:|
@@ -33,6 +33,9 @@ _Note: Use the [Markdown Table Generator](http://www.tablesgenerator.com/markdow
 | Web-2                | Webserver             | -             | 10.0.0.10    | Ubuntu 18.04.6   |
 | ELK-1                | ELK server            | 13.86.88.63   | 10.2.0.4     | Ubuntu 18.04.6   |
 | LoadBalancer_01      | Load Balancer Gateway | 20.127.116.72 | -            | -                |
+
+View a network diagram of this setup:
+https://drive.google.com/file/d/1xfPY2GM8Nty4NW66oF8soFfExBRNlHny/view?usp=sharing
 
 ### Access Policies
 
@@ -66,9 +69,15 @@ The playbook implements the following tasks:
 - Enable Docker
 
 
-The following screenshot displays the result of running `docker ps` after successfully configuring the ELK instance.
+If the ELK server is configured correctly, running `docker ps` on it should return something that looks like this:
+```
+~$ sudo docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED       STATUS          PORTS                                                                              NAMES
+e1e0aaf79ffa   sebp/elk:761   "/usr/local/bin/star…"   2 weeks ago   Up 54 minutes   0.0.0.0:5044->5044/tcp, 0.0.0.0:5601->5601/tcp, 0.0.0.0:9200->9200/tcp, 9300/tcp   ELK
 
-https://drive.google.com/file/d/1xfPY2GM8Nty4NW66oF8soFfExBRNlHny/view?usp=sharing
+```
+
+
 
 ### Target Machines & Beats
 This ELK server is configured to monitor the following machines:
